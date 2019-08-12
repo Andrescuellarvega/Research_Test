@@ -48,7 +48,6 @@ def n_in(frequency, T):
 # FREQUENCIES ARRAY
 # ----------------------------------------------------------------------------------------------------------------------
 
-
 # Function takes four arguments:
 # freq_range_low = lower bound of the frequency range examined,
 # freq_range_high = upper bound of the frequency range examined,
@@ -107,7 +106,7 @@ def Periodic_Energy_Bands(frequency_grid, current_k, N_SQUIDs):
 
     # lattice constant (distance between SQUIDs); with this choice, main and the side bands are in allowed energy
     # band for omega in [0.48, 0.52] omega_d
-    ell = 0.96 * lambda_omega
+    ell = 0.96*lambda_omega
 
     # P matrix, parts of propagation matrices between SQUIDs (l = ell)
     P_matrix =  np.zeros((2 * N_sidebands + 1, 2 * N_sidebands + 1), dtype='complex')
@@ -130,26 +129,28 @@ def Periodic_Energy_Bands(frequency_grid, current_k, N_SQUIDs):
 # SETTING PARAMETERS AND OUTPUT CALCULATION
 # ----------------------------------------------------------------------------------------------------------------------
 
-N_sidebands = 1
-N_bins = 500
+N_sidebands = 4
+N_bins = 10000
 N_SQUIDs = 100
 
 freq_range_low, freq_range_high = (1/N_bins, (1-(1/N_bins)))
 
 frequency_grid, freq_grid_size = frequencies_array(freq_range_low, freq_range_high, N_bins, N_sidebands)
 
+allowed_bins = np.zeros(freq_grid_size)
 
-truth = np.abs(Periodic_Energy_Bands(frequency_grid, 4, N_SQUIDs))
-
-truth = np.empty(freq_grid_size)
 
 for k in range(0, freq_grid_size):
 
-    truth[k] = Periodic_Energy_Bands(frequency_grid, k, N_SQUIDs)
-#    if truth[k] == 1 and truth[k-1] ==0:
-#        print(k, truth[k], truth[k-1])
+    allowed_bins[k] = Periodic_Energy_Bands(frequency_grid, k, N_SQUIDs)
 
-print(truth)
+non_zeros = np.flatnonzero(allowed_bins)
+if non_zeros.size == 0:
+    print("No allowed energies")
+else:
+    limits = (non_zeros[0], non_zeros[-1])
+    print(limits, non_zeros.size)
 
 
-\
+
+
