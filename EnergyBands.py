@@ -148,9 +148,13 @@ non_zeros = np.flatnonzero(allowed_bins)
 if non_zeros.size == 0:
     print("No allowed energies")
 else:
-    limits = (non_zeros[0], non_zeros[-1])
-    print(limits, non_zeros.size)
-
+    bin_limits = (non_zeros[0], non_zeros[-1])
+    freq_limits = ((bin_limits[0]+1)/N_bins, (bin_limits[1]+1)/N_bins)
+    bins_within_bounds = (bin_limits[1] - bin_limits[0])
+    unallowed_within_bounds = bins_within_bounds - non_zeros.size
+    print("N_SQUIDs = " + str(N_SQUIDs) + "\nfrequency limits = (" + str(freq_limits[0]) + ", " + str(freq_limits[1])\
+          + ")\n# of bins within bounds = " + str(bins_within_bounds) + "\nunallowed frequencies within bounds = "\
+          + str(unallowed_within_bounds))
 
 
 

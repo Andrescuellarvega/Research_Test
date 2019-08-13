@@ -165,10 +165,10 @@ def lower_higher_coefficients(matrix):
 # ----------------------------------------------------------------------------------------------------------------------
 
 N_sidebands = 4
-N_bins = 1000
+N_bins = 10000
 N_SQUIDs = 100
 temperature = 0.025  # In Kelvin
-freq_range_low, freq_range_high = (0.48, 0.52)
+freq_range_low, freq_range_high = (0.4802, 0.5194)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # OUTPUT RADIATION CALCULATION
@@ -284,29 +284,16 @@ low_exp = -(int(str(nout_therm_right_lower.max())[-2:]))
 low_weight = 10**(int(-low_exp))
 high_weight = 10**(int(-high_exp))
 
-fig = plt.figure(figsize=(8, 6))
-plt.subplot(2, 2, 1)
-therm_lower, = plt.plot(freq_grid, low_weight*nout_therm_left_lower, 'r--')
-plt.xlabel("$ \omega / \omega_d $")
-plt.ylabel("$ n_{pout}(\omega)$ * (e" + str(low_exp) + ')')
-plt.ylim(low_weight*(nout_therm_left_lower.min() - 0.1*nout_therm_left_lower.max()), low_weight*1.1*nout_therm_left_lower.max())
-plt.title('Left Thermal Radiation, Lower Band')
+fig = plt.figure(figsize=(10, 4.5))
 
-plt.subplot(2, 2, 2)
+plt.subplot(1, 2, 1)
 therm_right_lower, = plt.plot(freq_grid, low_weight*nout_therm_right_lower, 'r--')
 plt.xlabel("$ \omega / \omega_d $")
 plt.ylabel("$ n_{pout}(\omega)$ * (e" + str(low_exp) + ')')
 plt.ylim(low_weight*(nout_therm_right_lower.min() - (0.1)*nout_therm_right_lower.max()), low_weight*1.1*nout_therm_right_lower.max())
 plt.title('Right Thermal Radiation, Lower Band')
 
-plt.subplot(2, 2, 3)
-therm_higher, = plt.plot(freq_grid+1, high_weight*nout_therm_left_higher, 'r--')
-plt.xlabel("$ \omega / \omega_d $")
-plt.ylabel("$ n_{pout}(\omega)$ * (e" + str(high_exp) + ')')
-plt.ylim(high_weight*(nout_therm_left_higher.min() - 0.1*nout_therm_left_higher.max()), high_weight*1.1*nout_therm_left_higher.max())
-plt.title('Left Thermal Radiation, Higher Band')
-
-plt.subplot(2, 2, 4)
+plt.subplot(1, 2, 2)
 therm_right_higher, = plt.plot(freq_grid+1, high_weight*nout_therm_right_higher, 'r--')
 plt.ylabel("$ n_{pout}(\omega)$ * (e" + str(high_exp) + ')')
 plt.ylim(high_weight*(nout_therm_right_higher.min() - 0.1*nout_therm_right_higher.max()), high_weight*1.1*nout_therm_right_higher.max())
