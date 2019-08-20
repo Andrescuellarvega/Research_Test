@@ -1,2 +1,2 @@
 # Research_Test
- Test repository with reearch code
+ Test repository with research code
