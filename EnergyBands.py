@@ -1,5 +1,6 @@
 import scipy.constants as constants
 import numpy as np
+import matplotlib.pyplot as plt
 
 #  ---------------------------------------------------------------------------------------------------------------------
 #  CONSTANT DEFINITIONS
@@ -129,8 +130,8 @@ def Periodic_Energy_Bands(frequency_grid, current_k, N_SQUIDs):
 # SETTING PARAMETERS AND OUTPUT CALCULATION
 # ----------------------------------------------------------------------------------------------------------------------
 
-N_sidebands = 4
-N_bins = 10000
+N_sidebands = 1
+N_bins = 500
 N_SQUIDs = 100
 
 freq_range_low, freq_range_high = (1/N_bins, (1-(1/N_bins)))
@@ -156,5 +157,12 @@ else:
           + ")\n# of bins within bounds = " + str(bins_within_bounds) + "\nunallowed frequencies within bounds = "\
           + str(unallowed_within_bounds))
 
-
-
+plt.figure()
+plotgrid = np.linspace(1/N_bins, (1-(1/N_bins)), freq_grid_size)
+plt.suptitle('Allowed energy bands: ' + str(N_SQUIDs) + ' SQUIDs, '+ str(N_sidebands) + ' sidebands, ' + str(N_bins) + ' bins.')
+plt.bar(plotgrid, allowed_bins, width=1/N_bins, color='red')
+plt.xlabel('Normalized Freq')
+plt.ylabel('Allowed energies')
+plt.xlim(0.48, 0.52)
+plt.ylim(0,1)
+plt.show()
