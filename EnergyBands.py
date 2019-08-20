@@ -132,7 +132,7 @@ def Periodic_Energy_Bands(frequency_grid, current_k, N_SQUIDs):
 
 N_sidebands = 1
 N_bins = 10000
-N_SQUIDs = 100
+N_SQUIDs = 125
 
 freq_range_low, freq_range_high = (1/N_bins, (1-(1/N_bins)))
 
