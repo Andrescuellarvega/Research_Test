@@ -123,7 +123,6 @@ def Periodic_Energy_Bands(frequency_grid, current_k, N_SQUIDs):
     T_hat = np.matmul(P_hat, S_hat)
     C_hat = np.matmul(S_hat, np.linalg.matrix_power(T_hat, N_SQUIDs))
 
-
     eigenvals = np.around(np.real(np.conj(np.linalg.eig(C_hat)[0])*np.linalg.eig(C_hat)[0]), decimals=8)
     #eigenvals = np.conj(np.linalg.eig(C_hat)[0])*np.linalg.eig(C_hat)[0]
     #print(eigenvals)
@@ -134,27 +133,48 @@ def Periodic_Energy_Bands(frequency_grid, current_k, N_SQUIDs):
 # ----------------------------------------------------------------------------------------------------------------------
 
 N_sidebands = 1
-N_bins = 500
+N_bins = 1000
 N_SQUIDs = 125
-
+N_eigenvals = 2*(2*N_sidebands+1)
 freq_range_low, freq_range_high = (1/N_bins, (1-(1/N_bins)))
 
 frequency_grid, freq_grid_size = frequencies_array(freq_range_low, freq_range_high, N_bins, N_sidebands)
 
-allowed_bins = np.zeros(freq_grid_size)
+allowed_bins = np.zeros((freq_grid_size, N_eigenvals))
 
-test_run = Periodic_Energy_Bands(frequency_grid, 250, N_SQUIDs)
+for k in range(0, N_bins-1):
+    allowed_bins[k, :] = np.isclose(np.ones(N_eigenvals), Periodic_Energy_Bands(frequency_grid, k, N_SQUIDs))
+
+fig = plt.figure()
+
+plotgrid = np.linspace(1/N_bins, (1-(1/N_bins)), freq_grid_size)
+fig.suptitle('Allowed energy bands: ' + str(N_SQUIDs) + ' SQUIDs, '+ str(N_sidebands) + ' sidebands, ' + str(N_bins) + ' bins.')
+plt.xlabel('Normalized Freq')
+plt.ylabel('Allowed energies')
+
+for eigenval in range(1, N_eigenvals-1):
+    print('count= ' + str(eigenval) + ' subplot num= ' + str(N_eigenvals-eigenval) + ' allowed_bins_index= ' + str(N_eigenvals-eigenval-1))
+    plt.subplot(N_eigenvals,1, N_eigenvals-eigenval)
+    plt.bar(plotgrid, allowed_bins[:, N_eigenvals-eigenval-1], width=1/N_bins, color='red')
+    plt.xlim(0.48,0.52)
+    plt.xticks([])
+    plt.yticks([])
+
+plt.subplot(N_eigenvals,1, N_eigenvals)
+plt.bar(plotgrid, allowed_bins[:, 0], width=1/N_bins, color='red')
+plt.xlim(0.48,0.52)
 
 
-for k in range(235, 265):
-    print(np.ones(6), Periodic_Energy_Bands(frequency_grid, k, N_SQUIDs))
-    #allowed_bins[k] = Periodic_Energy_Bands(frequency_grid, k, N_SQUIDs)
 
-#non_zeros = np.flatnonzero(allowed_bins)
-#if non_zeros.size == 0:
+
+plt.show()
+
+#non_zeros = np.nonzero(allowed_bins)
+#if np.array(non_zeros).shape == 0:
 #    print("No allowed energies")
 #else:
 #    bin_limits = (non_zeros[0], non_zeros[-1])
+#    print(bin_limits)
 #    freq_limits = ((bin_limits[0]+1)/N_bins, (bin_limits[1]+1)/N_bins)
 #    bins_within_bounds = (bin_limits[1] - bin_limits[0])
 #    unallowed_within_bounds = bins_within_bounds - non_zeros.size
