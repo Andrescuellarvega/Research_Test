@@ -124,8 +124,6 @@ def Periodic_Energy_Bands(frequency_grid, current_k, N_SQUIDs):
     C_hat = np.matmul(S_hat, np.linalg.matrix_power(T_hat, N_SQUIDs))
 
     eigenvals = np.around(np.real(np.conj(np.linalg.eig(C_hat)[0])*np.linalg.eig(C_hat)[0]), decimals=8)
-    #eigenvals = np.conj(np.linalg.eig(C_hat)[0])*np.linalg.eig(C_hat)[0]
-    #print(eigenvals)
 
     return eigenvals
 # ----------------------------------------------------------------------------------------------------------------------
@@ -133,7 +131,7 @@ def Periodic_Energy_Bands(frequency_grid, current_k, N_SQUIDs):
 # ----------------------------------------------------------------------------------------------------------------------
 
 N_sidebands = 1
-N_bins = 1000
+N_bins = 5000
 N_SQUIDs = 125
 N_eigenvals = 2*(2*N_sidebands+1)
 freq_range_low, freq_range_high = (1/N_bins, (1-(1/N_bins)))
@@ -141,44 +139,57 @@ freq_range_low, freq_range_high = (1/N_bins, (1-(1/N_bins)))
 frequency_grid, freq_grid_size = frequencies_array(freq_range_low, freq_range_high, N_bins, N_sidebands)
 
 allowed_bins = np.zeros((freq_grid_size, N_eigenvals))
+allowed_all_sidebands = np.zeros(freq_grid_size)
+comparison_tolerance = 10**(-4)
 
 for k in range(0, N_bins-1):
-    allowed_bins[k, :] = np.isclose(np.ones(N_eigenvals), Periodic_Energy_Bands(frequency_grid, k, N_SQUIDs))
+    eigens = Periodic_Energy_Bands(frequency_grid, k, N_SQUIDs)
+    allowed_bins[k, :] = np.isclose(np.ones(N_eigenvals), eigens, atol=comparison_tolerance)
+    allowed_all_sidebands[k] = np.allclose(np.ones(N_eigenvals), eigens, atol=comparison_tolerance)
+
+# ----------------------------------------------------------------------------------------------------------------------
+#   PLOTTING
+# ----------------------------------------------------------------------------------------------------------------------
 
 fig = plt.figure()
 
 plotgrid = np.linspace(1/N_bins, (1-(1/N_bins)), freq_grid_size)
-fig.suptitle('Allowed energy bands: ' + str(N_SQUIDs) + ' SQUIDs, '+ str(N_sidebands) + ' sidebands, ' + str(N_bins) + ' bins.')
+fig.suptitle('Allowed energy bands (individual eigenvalues): ' + '\n' + str(N_SQUIDs) + ' SQUIDs, '+ str(N_sidebands) +
+             ' sidebands, ' + str(N_bins) + ' bins.\n' +
+             'All eigenvals allowed for ' + str(np.flatnonzero(allowed_all_sidebands).size) + ' energy bins.'
+             + 'at ' + str(comparison_tolerance) + ' comparison tolerance')
 plt.xlabel('Normalized Freq')
 plt.ylabel('Allowed energies')
 
-for eigenval in range(1, N_eigenvals-1):
-    print('count= ' + str(eigenval) + ' subplot num= ' + str(N_eigenvals-eigenval) + ' allowed_bins_index= ' + str(N_eigenvals-eigenval-1))
-    plt.subplot(N_eigenvals,1, N_eigenvals-eigenval)
-    plt.bar(plotgrid, allowed_bins[:, N_eigenvals-eigenval-1], width=1/N_bins, color='red')
-    plt.xlim(0.48,0.52)
+# Plot allowed energies for each eigenvalue
+for eigenval in range(1, N_eigenvals+1):
+    plt.subplot(N_eigenvals+1, 1, eigenval)
+    plt.bar(plotgrid, allowed_bins[:, N_eigenvals-eigenval], width=1/N_bins, color='red')
+    plt.xlim(0.48, 0.52)
+    plt.ylim(0, 1)
     plt.xticks([])
     plt.yticks([])
 
-plt.subplot(N_eigenvals,1, N_eigenvals)
-plt.bar(plotgrid, allowed_bins[:, 0], width=1/N_bins, color='red')
-plt.xlim(0.48,0.52)
+# Plot allowed energies for all eigenvalues
+plt.subplot(N_eigenvals+1,1, N_eigenvals+1)
+plt.bar(plotgrid, allowed_all_sidebands, width=1/N_bins, color='green')
+plt.xlim(0.48, 0.52)
+plt.ylim(0, 1)
+plt.yticks([])
+plt.subplots_adjust(wspace=0, hspace=0)
 
+print('all allowed for ' + str(np.flatnonzero(allowed_all_sidebands).size) + ' energies.')
 
-
-
+#plt.savefig('Allowed energy bands (individual eigenvalues): ' + '\n' + str(N_SQUIDs) + ' SQUIDs, '+ str(N_sidebands) +
+#             ' sidebands, ' + str(N_bins) + ' bins.\n' +
+#             'All eigenvals allowed for ' + str(np.flatnonzero(allowed_all_sidebands).size) + ' energy bins '
+#             + 'at ' + str(comparison_tolerance) + ' comparison tolerance.')
 plt.show()
 
-#non_zeros = np.nonzero(allowed_bins)
-#if np.array(non_zeros).shape == 0:
-#    print("No allowed energies")
-#else:
-#    bin_limits = (non_zeros[0], non_zeros[-1])
-#    print(bin_limits)
-#    freq_limits = ((bin_limits[0]+1)/N_bins, (bin_limits[1]+1)/N_bins)
-#    bins_within_bounds = (bin_limits[1] - bin_limits[0])
-#    unallowed_within_bounds = bins_within_bounds - non_zeros.size
-#    print("N_SQUIDs = " + str(N_SQUIDs) + "\nfrequency limits = (" + str(freq_limits[0]) + ", " + str(freq_limits[1])\
-#          + ")\n# of bins within bounds = " + str(bins_within_bounds) + "\nunallowed frequencies within bounds = "\
-#          + str(unallowed_within_bounds))
-
+# ----------------------------------------------------------------------------------------------------------------------
+# NOTES:
+#   Changed comparison from how it's done one EnergyBands.py, where I rounded the mod of eigenvalues and then used
+#       np.array_equal.
+#   Now I use np.allclose() and np.isclose() instead, which have a built-in tolerance value when comparing.
+#
+# ----------------------------------------------------------------------------------------------------------------------
