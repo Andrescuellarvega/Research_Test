@@ -1,6 +1,7 @@
 import scipy.constants as constants
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
 
 #  ---------------------------------------------------------------------------------------------------------------------
 #  CONSTANT DEFINITIONS
@@ -27,7 +28,6 @@ omega_d = (2*constants.pi*18.6)*10**9  # Drive angular frequency, where omega_d 
 #  ---------------------------------------------------------------------------------------------------------------------
 #  FUNCTION DEFINITIONS
 #  ---------------------------------------------------------------------------------------------------------------------
-
 
 def delta(x, y):
     if x == y:
@@ -124,22 +124,32 @@ def Periodic_Energy_Bands(frequency_grid, current_k):
     eigenvals = np.real(np.conj(np.linalg.eig(T_hat)[0])*np.linalg.eig(T_hat)[0])
 
     return eigenvals
-# ----------------------------------------------------------------------------------------------------------------------
-# SETTING PARAMETERS
-# ----------------------------------------------------------------------------------------------------------------------
 
-N_sidebands = 4
-N_bins = 1000
-N_eigenvals = 2*(2*N_sidebands+1)
-comparison_tolerance = 10**(-8)
+# ----------------------------------------------------------------------------------------------------------------------
+# PARSING PARAMETERS
+# ----------------------------------------------------------------------------------------------------------------------
+parser = argparse.ArgumentParser()
+parser.add_argument('-b', '--N_bins', type=int, nargs=1, required=True)
+parser.add_argument('-s', '--N_sidebands', type=int, nargs=1, required=True)
+parser.add_argument('-t', '--tolerance', type=float, nargs=1, required=True)
 
-freq_range_low, freq_range_high = (1/N_bins, 1-(1/N_bins))
+# Uncomment either of these to specifiy parameters from within the program
+#args = parser.parse_args('--N_bins 1000 --N_sidebands 4 --Comp_tolerance 1e-8'.split())
+#args = parser.parse_args('-b 100 -s 4 -t 1e-8'.split())
+
+# Uncomment this to parse from program run
+args = parser.parse_args()
+
+N_sidebands, N_bins, comparison_tolerance = args.N_sidebands[0], args.N_bins[0], args.tolerance[0]
 
 # ----------------------------------------------------------------------------------------------------------------------
 # OUTPUT CALCULATION
 # ----------------------------------------------------------------------------------------------------------------------
+N_eigenvals = 2*(2*N_sidebands+1)
+freq_range_low, freq_range_high = (1/N_bins, 1-(1/N_bins))
 
 frequency_grid, freq_grid_size = frequencies_array(freq_range_low, freq_range_high, N_bins, N_sidebands)
+
 allowed_bins = np.zeros((freq_grid_size, N_eigenvals))
 allowed_all_sidebands = np.zeros(freq_grid_size)
 
@@ -180,7 +190,7 @@ plt.yticks([])
 plt.subplots_adjust(wspace=0, hspace=0)
 
 
-# Uncomment this part to save the plot instead of showing it:
+#Uncomment this part to save the plot instead of showing it:
 #plt.savefig('Allowed energy bands (individual eigenvalues): ' + '\n' + str(N_sidebands) +
 #             ' sidebands, ' + str(N_bins) + ' bins \n' +
 #              ' at ' + str(comparison_tolerance) + ' comparison tolerance.')
