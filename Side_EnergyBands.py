@@ -1,6 +1,7 @@
 import scipy.constants as constants
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import argparse
 
 #  ---------------------------------------------------------------------------------------------------------------------
@@ -133,9 +134,9 @@ parser.add_argument('-b', '--N_bins', type=int, nargs=1, required=True)
 parser.add_argument('-s', '--N_sidebands', type=int, nargs=1, required=True)
 parser.add_argument('-t', '--tolerance', type=float, nargs=1, required=True)
 
-# Uncomment either of these to specifiy parameters from within the program
+# Uncomment either of these to specify parameters from within the program
 #args = parser.parse_args('--N_bins 1000 --N_sidebands 4 --Comp_tolerance 1e-8'.split())
-#args = parser.parse_args('-b 100 -s 4 -t 1e-8'.split())
+#args = parser.parse_args('-b 1000 -s 4 -t 1e-8'.split())
 
 # Uncomment this to parse from program run
 args = parser.parse_args()
@@ -167,35 +168,39 @@ fig = plt.figure()
 plot_grid = np.linspace(freq_range_low, freq_range_high, freq_grid_size)
 
 fig.suptitle('Allowed energy bands (individual eigenvalues): ' + '\n' + str(N_sidebands) +
-             ' sidebands, ' + str(N_bins) + ' bins\n' +
-             'at '+ str(comparison_tolerance) + ' comparison tolerance')
-plt.xlabel('Normalized Freq')
-plt.ylabel('Allowed energies')
+             ' sidebands, ' + str(N_bins) + ' bins.')
+
 
 # Plot allowed energies for each eigenvalue
-for eigenval in range(1, N_eigenvals+1):
+for eigenval in range(1, N_eigenvals):
     plt.subplot(N_eigenvals+1, 1, eigenval)
     plt.bar(plot_grid, allowed_bins[:, N_eigenvals - eigenval], width=1 / N_bins, color='red')
+    plt.bar(plot_grid, allowed_all_sidebands, width=1 / N_bins, color='green')
     plt.xlim(freq_range_low, freq_range_high)
     plt.ylim(0, 1)
     plt.xticks([])
     plt.yticks([])
+    if eigenval == N_eigenvals/2:
+        plt.ylabel('Eigenvalues')
 
 # Plot allowed energies for all eigenvalues
-plt.subplot(N_eigenvals+1,1, N_eigenvals+1)
+plt.subplot(N_eigenvals+1,1, N_eigenvals)
+plt.bar(plot_grid, allowed_bins[:, 0], width=1 / N_bins, color='red')
 plt.bar(plot_grid, allowed_all_sidebands, width=1 / N_bins, color='green')
 plt.xlim(freq_range_low, freq_range_high)
 plt.ylim(0, 1)
 plt.yticks([])
+plt.xlabel('Normalized Frequency')
 plt.subplots_adjust(wspace=0, hspace=0)
-
+patch = mpatches.Patch(color='green', label='Allowed in \n all Bands')
+plt.legend(handles=[patch],bbox_to_anchor=(0.68,0.11),mode='expand', bbox_transform=fig.transFigure)
 
 #Uncomment this part to save the plot instead of showing it:
-#plt.savefig('Allowed energy bands (individual eigenvalues): ' + '\n' + str(N_sidebands) +
-#             ' sidebands, ' + str(N_bins) + ' bins \n' +
-#              ' at ' + str(comparison_tolerance) + ' comparison tolerance.')
+plt.savefig('Allowed energy bands (individual eigenvalues): ' + '\n' + str(N_sidebands) +
+             ' sidebands, ' + str(N_bins) + ' bins \n')
 
-plt.show()
+
+#plt.show()
 
 # ----------------------------------------------------------------------------------------------------------------------
 # NOTES:
