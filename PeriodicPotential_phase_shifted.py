@@ -1,6 +1,7 @@
 import scipy.constants as constants
 import matplotlib.pyplot as plt
 import numpy as np
+import argparse
 
 #  ---------------------------------------------------------------------------------------------------------------------
 #  CONSTANT DEFINITIONS
@@ -181,14 +182,24 @@ def lower_higher_coefficients(matrix):
         v[m - 1] = np.real(np.conj(matrix[N_sidebands - 1, m - 1]) * matrix[N_sidebands - 1, m - 1])
 
     return u, v
-
 # ----------------------------------------------------------------------------------------------------------------------
-# SETTING PARAMETERS AND OUTPUT CALCULATION
+# PARSING PARAMETERS
 # ----------------------------------------------------------------------------------------------------------------------
+parser = argparse.ArgumentParser()
+parser.add_argument('-nb', '--N_bins', type=int, nargs=1, required=True)
+parser.add_argument('-sb', '--N_sidebands', type=int, nargs=1, required=True)
+parser.add_argument('-sq', '--N_SQUIDs', type=int, nargs=1, required=True)
 
-N_sidebands = 4
-N_bins = 1000
-N_SQUIDs = 101
+
+# Uncomment either of these to specify parameters from within the program
+#args = parser.parse_args('--N_bins 1000 --N_sidebands 4 --N_SQUIDS 100'.split())
+#args = parser.parse_args('-nb 1000 -sb 4 -sq 100'.split())
+
+# Uncomment this to parse from program run
+args = parser.parse_args()
+
+N_sidebands, N_bins, N_SQUIDs = args.N_sidebands[0], args.N_bins[0], args.N_SQUIDs[0]
+
 temperature = 0.025  # In Kelvin
 freq_range_low, freq_range_high = (0.4802, 0.5194)
 
@@ -297,8 +308,8 @@ dce_higher, = plt.plot(freq_grid + 1, nout_dce_right_higher, 'b--')
 plt.ylim(nout_dce_right_higher.min() - (0.1)*nout_dce_right_higher.max(), (1.1)*nout_dce_right_higher.max())
 plt.title('DCE Radiation, Higher Band')
 
-#plt.savefig(fig1_name)
-plt.show()
+plt.savefig(fig1_name)
+#plt.show()
 
 # These are here just for graph aesthetics
 high_exp = -(int(str(nout_therm_right_higher.max())[-2:]))
