@@ -122,7 +122,7 @@ def Periodic_Coefficient_Matrices(frequency_grid, current_k, N_SQUIDs):
                 np.concatenate((zero_mat, np.conj(P_matrix)), axis=1)), axis=0)
 
     T_hat = np.matmul(P_hat, S_hat)
-    C_hat = np.matmul(S_hat, np.linalg.matrix_power(T_hat, N_SQUIDs))
+    C_hat = np.linalg.matrix_power(T_hat, N_SQUIDs)
 
     asub = C_hat[0:2*N_sidebands+1, 0:2*N_sidebands+1]
     bsub = C_hat[0:2*N_sidebands+1, 2*N_sidebands+1:]
@@ -164,8 +164,9 @@ def lower_higher_coefficients(matrix):
 # SETTING PARAMETERS AND OUTPUT CALCULATION
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 N_sidebands = 4
-N_bins = 10000
+N_bins = 1000
 N_SQUIDs = 100
 temperature = 0.025  # In Kelvin
 freq_range_low, freq_range_high = (0.4802, 0.5194)
