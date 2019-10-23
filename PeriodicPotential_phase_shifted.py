@@ -37,14 +37,15 @@ def delta(x, y):
     return d
 
 def g(ww, n, m, ith_SQUID):
-    #g_shifted = delta(n, m) + 0.5 * (dE_j / E0_j) * np.sqrt(np.abs(ww[m - 1] / ww[n - 1])) * \
-    #    (np.exp(-np.complex(0, 1)*(ith_SQUID*omega_d/N_bins))*delta(n, m + 1) \
-    #        + np.exp(np.complex(0, 1)*(ith_SQUID*omega_d/N_bins))*delta(n, m - 1))
+    g_shifted = delta(n, m) + 0.5 * (dE_j / E0_j) * np.sqrt(np.abs(ww[m - 1] / ww[n - 1])) * \
+        (np.exp(-np.complex(0, 1)*(ith_SQUID*omega_d/N_SQUIDs))*delta(n, m + 1) \
+            + np.exp(+np.complex(0, 1)*(ith_SQUID*omega_d/N_SQUIDs))*delta(n, m - 1))
 
     g = delta(n, m) + 0.5 * (dE_j / E0_j) * np.sqrt(np.abs(ww[m - 1] / ww[n - 1])) * \
         (delta(n, m + 1) + delta(n, m - 1))
+
     #With unshifted g, I should get the same result as in PeriodicPotential.py
-    return g
+    return g_shifted
 
 def n_in(frequency, T):
     n_in = 1 / (np.exp(hbar * np.abs(frequency) / (kb * T)) - 1)
@@ -135,15 +136,15 @@ def Periodic_Coefficient_Matrices(frequency_grid, current_k, N_SQUIDs):
 
     T_hat = np.zeros((N_SQUIDs, 2*(2 * N_sidebands + 1), 2*(2 * N_sidebands + 1)), dtype='complex')
 
-    for ith_SQUID in range(1, N_SQUIDs+1):
-        if ith_SQUID == 1:
-            C_hat = S_hat[ith_SQUID-1]
+    for ith_SQUID in range(N_SQUIDs, 0, -1):
+        if ith_SQUID == N_SQUIDs:
+            T_hat[ith_SQUID-1] = np.matmul(P_hat, S_hat[ith_SQUID-1])
+            C_hat = T_hat[ith_SQUID-1]
+        elif ith_SQUID == 1:
+            C_hat = np.linalg.multi_dot([S_hat[ith_SQUID-1], C_hat])
         else:
             T_hat[ith_SQUID-1] = np.matmul(P_hat, S_hat[ith_SQUID-1])
-            C_hat = np.linalg.multi_dot([C_hat, T_hat[ith_SQUID-1]])
-
-    #T_hat = np.matmul(P_hat, S_hat[0])
-    #C_hat = np.linalg.multi_dot([S_hat[0], np.linalg.matrix_power(T_hat, N_SQUIDs)])
+            C_hat = np.linalg.multi_dot([T_hat[ith_SQUID-1], C_hat])
 
     asub = C_hat[0:2*N_sidebands+1, 0:2*N_sidebands+1]
     bsub = C_hat[0:2*N_sidebands+1, 2*N_sidebands+1:]
@@ -187,7 +188,7 @@ def lower_higher_coefficients(matrix):
 
 N_sidebands = 4
 N_bins = 1000
-N_SQUIDs = 100
+N_SQUIDs = 101
 temperature = 0.025  # In Kelvin
 freq_range_low, freq_range_high = (0.4802, 0.5194)
 
@@ -282,7 +283,7 @@ freq_grid = frequency_grid[:, N_sidebands] / omega_d
 
 
 fig = plt.figure(figsize=(10, 4.5))
-fig1_name = 'DCE Radiation: ' + str(N_SQUIDs) + ' SQUIDs, '+ str(N_sidebands) + ' sidebands, ' + str(N_bins) + ' bins.'
+fig1_name = 'DCE Radiation (PHASE SHIFTED): ' + str(N_SQUIDs) + ' SQUIDs, '+ str(N_sidebands) + ' sidebands, ' + str(N_bins) + ' bins.'
 plt.suptitle(fig1_name, fontsize=16)
 
 plt.subplot(1, 2, 1)
