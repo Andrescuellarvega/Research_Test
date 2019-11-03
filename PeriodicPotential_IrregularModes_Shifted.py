@@ -121,7 +121,7 @@ def Periodic_Coefficient_Matrices(frequency_grid, current_k, N_SQUIDs):
     G_matrices = np.zeros((N_SQUIDs,2 * N_sidebands + 1, 2 * N_sidebands + 1), dtype='complex')
     S_hat = np.zeros((N_SQUIDs, 2*(2 * N_sidebands + 1), 2*(2 * N_sidebands + 1)), dtype='complex')
 
-    #Trying to do the matrix multiplication with di
+
     for ith_SQUID in range(1, N_SQUIDs+1):
 
         for m in range(1, 2*N_sidebands+2):
@@ -137,14 +137,15 @@ def Periodic_Coefficient_Matrices(frequency_grid, current_k, N_SQUIDs):
 
 
 
-    #  We calculate T_hat, C_hat for every SQUID, if we have no shift, all T_hat are equal
+    # We calculate T_hat, C_hat for every SQUID, if we have no shift, all T_hat are equal
+    # Still need to work on this whole part, not sure how to proceed for shifted case when constructing W_hat
 
     T_hat = np.zeros((N_SQUIDs, 2 * (2 * N_sidebands + 1), 2 * (2 * N_sidebands + 1)), dtype='complex')
 
     for ith_SQUID in range(N_SQUIDs, 0, -1):
         T_hat[ith_SQUID - 1] = np.matmul(P_hat, S_hat[ith_SQUID - 1])
 
-        matrixeigenv = np.linalg.eig(T_hat[ith_SQUID - 1])[1]
+        T_eigenvals, matrixeigenv = np.linalg.eig(T_hat[ith_SQUID - 1])
         eigenv = np.transpose(matrixeigenv)
 
         matrixeigenustar = np.linalg.inv(eigenv)
@@ -155,9 +156,17 @@ def Periodic_Coefficient_Matrices(frequency_grid, current_k, N_SQUIDs):
 
         eigenvals_T_hat = np.linalg.eig(T_hat[ith_SQUID - 1])[0]
 
+        identity = np.matmul(np.transpose(matrixeigenv) ,matrixeigenustar)
+
+        W_hat = np.zeros((N_SQUIDs, 2 * (2 * N_sidebands + 1), 2 * (2 * N_sidebands + 1)), dtype='complex')
+
+        for i in range(1, 2*(2*N_sidebands+1)):
+            for j in range(1, 2*(2*N_sidebands+1)):
+                W_hat[ith_SQUID-1, i-1, j-1] = sum(T_eigenvals[alpha-1]**N_SQUIDs * eigenv[alpha, i-1] *
+                eigenustar[alpha-1, j-1] for alpha in range(0, 2*(2*N_sidebands+1)))
 
 
-    #  Matrix C_hat is calculated
+      #Matrix C_hat is calculated
         if ith_SQUID == N_SQUIDs:
             C_hat = T_hat[ith_SQUID-1]
         elif ith_SQUID == 1:
@@ -165,13 +174,19 @@ def Periodic_Coefficient_Matrices(frequency_grid, current_k, N_SQUIDs):
         else:
             C_hat = np.linalg.multi_dot([T_hat[ith_SQUID-1], C_hat])
 
+    #asub = C_hat[0:2*N_sidebands+1, 0:2*N_sidebands+1]
+    #bsub = C_hat[0:2*N_sidebands+1, 2*N_sidebands+1:]
+    #csub = C_hat[2*N_sidebands+1:, 0:2*N_sidebands+1]
+    #dsub = C_hat[2 * N_sidebands + 1:, 2*N_sidebands+1:]
+    #dsub_inverse = np.linalg.inv(dsub)
 
-
-    asub = C_hat[0:2*N_sidebands+1, 0:2*N_sidebands+1]
-    bsub = C_hat[0:2*N_sidebands+1, 2*N_sidebands+1:]
-    csub = C_hat[2*N_sidebands+1:, 0:2*N_sidebands+1]
-    dsub = C_hat[2 * N_sidebands + 1:, 2*N_sidebands+1:]
+    asub = W_hat[0:2 * N_sidebands + 1, 0:2 * N_sidebands + 1]
+    bsub = W_hat[0:2 * N_sidebands + 1, 2 * N_sidebands + 1:]
+    csub = W_hat[2 * N_sidebands + 1:, 0:2 * N_sidebands + 1]
+    dsub = W_hat[2 * N_sidebands + 1:, 2 * N_sidebands + 1:]
     dsub_inverse = np.linalg.inv(dsub)
+
+
 
     A_matrix = asub - np.matmul(bsub, np.matmul(dsub_inverse, csub))
     B_matrix = np.matmul(bsub, dsub_inverse)
