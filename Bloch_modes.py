@@ -108,9 +108,9 @@ def bloch_modes(q,epsilon):
     u1 = u1raw/norm1
     #print("u1", u1)
     #print("u1 ", u1)
-    
+
     ##up to u1 the results are the same as in Mathematica file, u1prime is still not the same, need to check for inconsistencies.
-    u1prime = ((v1norm[0]*np.exp(-j*(q-kkk))*(j*(q-kkk))) + (v1norm[1]*np.exp(j*(q+kkk))*((-j)*(q+kkk))))/(np.abs(v1norm[0]+v1norm[1])*norm1)
+    u1prime = ((v1norm[0]*np.exp(j*(q-kkk))*(j*(q-kkk))) + (v1norm[1]*np.exp(-j*(q+kkk))*((-j)*(q+kkk))))/(np.abs(v1norm[0]+v1norm[1])*norm1)
     print("u1prime ", u1prime)
     C_k = u1
     D_k = u1prime
