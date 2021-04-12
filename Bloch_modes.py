@@ -109,7 +109,7 @@ j = np.complex(0, 1)
 
 # Creating grid of input frequencies
 N_sidebands = 1  # Number of sidebands used for calculation
-N_bins = 10  # Number of bins dividing (0, 2*N_Omega + 1)
+N_bins = 100  # Number of bins dividing (0, 2*N_Omega + 1)
 freq_range_low, freq_range_high = (0, 1)  # Bounds for the input frequencies array, divided by drive frequency.
 
 # To make q_input with unitless freq, pass QQ as drive freq to the input_frequencies function
@@ -119,8 +119,16 @@ kk = np.abs(q_input)
 
 allowed_bands = bloch_test(q_input, N_bins,N_sidebands)
 
+A_k = np.zeros((N_bins-1, 2 *N_sidebands + 1), dtype='complex')
 
-for band in range(0, 2*N_sidebands + 1):
-    C_k, D_k = bloch_modes(kk[4,band], epsilon)
-    print("C_k ", C_k, " D_k ", D_k)
+for bin in range(0, N_bins-1):
+    for band in range(0, 2*N_sidebands + 1):
+        if allowed_bands[bin, band]:
+            C_k, D_k = bloch_modes(kk[bin, band], epsilon)
+            A_k[bin, band] = j*kk[bin, band] *C_k + D_k
+        elif not allowed_bands[bin, band]:
+            A_k[bin,band] = np.nan
+
+
+
 
