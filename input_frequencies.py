@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Function takes six arguments:
-# endpoints = bool, whether or not to include endpoints in array (zero and omega_d)
+# endpoint = bool, whether or not to include endpoint in array (omega_d)
 # freq_range_low = lower bound of the frequency range examined (from zero to omega_d),
 # freq_range_high = upper bound of the frequency range examined (from zero to omega_d),
 # N_bins = Number of bins to break up the frequency range into.
@@ -14,7 +14,7 @@
 # frequency grid has columns for each sideband (N_sidebands to - N_sidebands) and rows for frequencies
 
 
-def input_frequencies(endpoints,freq_range_low, freq_range_high, N_bins, N_sidebands, omega_d):
+def input_frequencies(endpoint, freq_range_low, freq_range_high, N_bins, N_sidebands, omega_d):
     import numpy as np
 
     low_index = int(N_bins * freq_range_low) - 1
