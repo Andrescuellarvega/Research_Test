@@ -1,14 +1,16 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# FREQUENCIES ARRAY
+# INPUT FREQUENCIES
 # ----------------------------------------------------------------------------------------------------------------------
 
-# Function takes four arguments:
-# freq_range_low = lower bound of the frequency range examined (from zero to one),
-# freq_range_high = upper bound of the frequency range examined (from zero to one),
-# N_SQUIDs = Number of SQUIDs connected in series,
+# Function takes six arguments:
+# endpoints = bool, whether or not to include endpoints in array (zero and omega_d)
+# freq_range_low = lower bound of the frequency range examined (from zero to omega_d),
+# freq_range_high = upper bound of the frequency range examined (from zero to omega_d),
+# N_bins = Number of bins to break up the frequency range into.
 # N_sidebands = Number of sidebands used in numerical calculation.
+# omega_d = drive frequency (To make q_input unitles, pass QQ as input.
 #
-# Function returns frequency grid and its dimensions (www in mathematica).
+# Function returns frequency grid (ww in mathematica).
 # frequency grid has columns for each sideband (N_sidebands to - N_sidebands) and rows for frequencies
 
 

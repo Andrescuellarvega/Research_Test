@@ -2,6 +2,7 @@ import scipy.constants as constants
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+import sys
 
 #  ---------------------------------------------------------------------------------------------------------------------
 #  CONSTANT DEFINITIONS
@@ -86,6 +87,7 @@ def frequencies_array(freq_range_low, freq_range_high, N_bins, N_sidebands):
 #
 # Function returns coefficient matrices A, B, C, D from TR notes
 
+
 def Periodic_Coefficient_Matrices(frequency_grid, current_k, N_SQUIDs):
     ww = frequency_grid[current_k, :]
 
@@ -125,27 +127,35 @@ def Periodic_Coefficient_Matrices(frequency_grid, current_k, N_SQUIDs):
     #C_hat = np.linalg.matrix_power(T_hat, N_SQUIDs)
 
     # Expressing transfer matrix W_hat (C_hat) in terms of eigenvectors of T_hat
-    T_eigenvals, matrixeigenv = np.linalg.eig(T_hat)
-    eigenv = np.transpose(matrixeigenv)
+    T_eigenvals, T_eigenvects = np.linalg.eig(T_hat)
+    eigenv = np.transpose(T_eigenvects)
     eigenustar = np.transpose(np.linalg.inv(eigenv))
 
-    T_abs_eigenvals = np.abs(T_eigenvals)
-    allowed_eigenvals = np.isclose(T_abs_eigenvals, 1, rtol=1e-8)
+    allowed_eigenvals = np.isclose(np.abs(T_eigenvals), 1, rtol=1e-12)
+
+    current_freq = frequency_grid[current_k, N_sidebands]/omega_d
+    if np.any(allowed_eigenvals):
+        print(sum(allowed_eigenvals),'/',mu,'allowed eigenvals for frequency', current_freq)
+    else:
+        print('un-allowed in all bands for frequency', current_freq)
+        sys.exit('surface state')
 
     W_hat = np.zeros((mu, mu), dtype='complex')
 
     for i in range(1, mu+1):
         for j in range(1, mu+1):
-            for alpha in range(1, mu+1):
-                W_hat[i - 1, j - 1] += (T_eigenvals[alpha - 1] ** N_SQUIDs) * eigenv[alpha - 1, i - 1]\
-                                       * eigenustar[alpha - 1, j - 1] * allowed_eigenvals[alpha-1]
+            for alpha in np.nditer(np.where(allowed_eigenvals)):
+                W_hat[i - 1, j - 1] += (T_eigenvals[alpha]**N_SQUIDs) * eigenv[alpha, i - 1] * eigenustar[alpha, j - 1]
+            #W_hat[i - 1, j - 1] = sum((T_eigenvals[alpha] ** N_SQUIDs) * eigenv[alpha, i - 1] *eigenustar[alpha, j - 1]\
+            #                          for alpha in np.nditer(np.where(allowed_eigenvals)))
 
-# -----------------------------------------------------------------------------------------------------------------------------------------------------
-    asub = W_hat[0:2*N_sidebands+1, 0:2*N_sidebands+1]
-    bsub = W_hat[0:2*N_sidebands+1, 2*N_sidebands+1:]
-    csub = W_hat[2*N_sidebands+1:, 0:2*N_sidebands+1]
-    dsub = W_hat[2 * N_sidebands + 1:, 2*N_sidebands+1:]
-    dsub_inverse = np.linalg.inv(dsub)
+    W_hatabs = np.abs(W_hat)
+    # -----------------------------------------------------------------------------------------------------------------------------------------------------
+    asub = W_hat[0:2 * N_sidebands + 1, 0:2 * N_sidebands + 1]
+    bsub = W_hat[0:2 * N_sidebands + 1, 2 * N_sidebands + 1:]
+    csub = W_hat[2 * N_sidebands + 1:, 0:2 * N_sidebands + 1]
+    dsub = W_hat[2 * N_sidebands + 1:, 2 * N_sidebands + 1:]
+    dsub_inverse = np.abs(np.linalg.inv(dsub))
 
     A_matrix = asub - np.matmul(bsub, np.matmul(dsub_inverse, csub))
     B_matrix = np.matmul(bsub, dsub_inverse)
@@ -163,6 +173,7 @@ def Periodic_Coefficient_Matrices(frequency_grid, current_k, N_SQUIDs):
 #
 # Function calculates squared coefficients Anm for given matrix A, u_aa, v_aa in mathematica
 
+
 def lower_higher_coefficients(matrix):
 
     u = np.zeros((2 * N_sidebands + 1))
@@ -170,10 +181,9 @@ def lower_higher_coefficients(matrix):
 
     for m in range(1, 2 * N_sidebands + 2):
         # lower portion, N_omega + 1 in mathematica
-        u[m - 1] = np.real(np.conj(matrix[N_sidebands, m - 1]) * matrix[N_sidebands, m - 1])
-
+        u[m - 1] = np.abs(matrix[N_sidebands, m - 1])**2
         # upper portion, N_omega in mathematica
-        v[m - 1] = np.real(np.conj(matrix[N_sidebands - 1, m - 1]) * matrix[N_sidebands - 1, m - 1])
+        v[m - 1] = np.abs(matrix[N_sidebands - 1, m - 1])**2
 
     return u, v
 
@@ -188,7 +198,7 @@ parser.add_argument('-sq', '--N_SQUIDs', type=int, nargs=1, required=True)
 
 # Uncomment either of these to specify parameters from within the program
 #args = parser.parse_args('--N_bins 1000 --N_sidebands 4 --N_SQUIDS 100'.split())
-args = parser.parse_args('-nb 1000 -sb 4 -sq 100'.split())
+args = parser.parse_args('-nb 1000 -sb 1 -sq 100'.split())
 
 # Uncomment this to parse from program run
 #args = parser.parse_args()
@@ -198,7 +208,12 @@ N_sidebands, N_bins, N_SQUIDs = args.N_sidebands[0], args.N_bins[0], args.N_SQUI
 mu = 2 * (2 * N_sidebands + 1)
 
 temperature = 0.025  # In Kelvin
-freq_range_low, freq_range_high = (0.4802, 0.5194)
+#freq_range_low, freq_range_high = (0.4802, 0.5194)
+#freq_range_low, freq_range_high = (0.44, 0.58)
+freq_range_low, freq_range_high = (0.79, 0.83)
+
+#freq_range_low, freq_range_high = (0.1, 0.9)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # OUTPUT RADIATION CALCULATION
@@ -228,7 +243,13 @@ sum_left_v2 = np.zeros(2 * N_sidebands + 1)
 
 for k in range(0, freq_grid_size):
 
-    A_matrix, B_matrix, C_matrix, D_matrix = Periodic_Coefficient_Matrices(frequency_grid, k, N_SQUIDs)  # Populate coefficients for (0 < omega_k < omega_d),(omega_d < omega_k < 2*omega_d)
+    A_matrix, B_matrix, C_matrix, D_matrix = Periodic_Coefficient_Matrices(frequency_grid, k, N_SQUIDs)
+
+    A_abs = np.abs(A_matrix)
+    B_abs = np.abs(B_matrix)
+    C_Abs = np.abs(C_matrix)
+    D_abs = np.abs(D_matrix)
+
     u_A, v_A = lower_higher_coefficients(A_matrix)
     u_B, v_B = lower_higher_coefficients(B_matrix)
     u_C, v_C = lower_higher_coefficients(C_matrix)
@@ -242,7 +263,6 @@ for k in range(0, freq_grid_size):
         sum_left_u1[m - 1] = n_in(frequency_grid[k, m - 1], temperature) * (u_C[m - 1] + u_D[m - 1])  # adding c and d in mathematica
         sum_left_v1[m - 1] = n_in(frequency_grid[k, m - 1], temperature) * (v_C[m - 1] + v_D[m - 1])  # adding e and f in mathematica
 
-
     nout_therm_right_lower[k] = np.sum(sum_right_u1)
     nout_therm_right_higher[k] = np.sum(sum_right_v1)
 
@@ -251,11 +271,11 @@ for k in range(0, freq_grid_size):
 
     # Populate DCE part of output
     for m in range(N_sidebands + 2, 2 * N_sidebands + 2):
-        sum_right_u2[m - 1] = u_A[m - 1] + u_B[m - 1]  # Runs 5<m<8 which is effectively 6<m<9
-        sum_right_v2[m - 1] = v_A[m - 1] + u_B[m - 1]  # Runs 5<m<8 which is effectively 6<m<9
+        sum_right_u2[m - 1] = u_A[m - 1] + u_B[m - 1]
+        sum_right_v2[m - 1] = v_A[m - 1] + u_B[m - 1]
 
-        sum_left_u2[m - 1] = u_A[m - 1] + u_B[m - 1]  # Runs 5<m<8 which is effectively 6<m<9
-        sum_left_v2[m - 1] = v_A[m - 1] + u_B[m - 1]  # Runs 5<m<8 which is effectively 6<m<9
+        sum_left_u2[m - 1] = u_A[m - 1] + u_B[m - 1]
+        sum_left_v2[m - 1] = v_A[m - 1] + u_B[m - 1]
 
     nout_dce_right_lower[k - 1] = np.sum(sum_right_u2)
     nout_dce_right_higher[k - 1] = np.sum(sum_right_v2)
@@ -271,15 +291,15 @@ zero_reference_array = np.zeros(freq_grid_size)
 
 if (nout_dce_right_lower - nout_dce_left_lower).all() == zero_reference_array.all() and \
         (nout_dce_right_higher - nout_dce_left_higher).all() == zero_reference_array.all():
-    print('DCE Radiation is symmetrical')
+    print('DCE Radiation is symmetric')
 else:
-    print('DCE Radiation is NOT symmetrical')
+    print('DCE Radiation is NOT symmetric')
 
 if (nout_therm_right_lower - nout_therm_left_lower).all() == zero_reference_array.all() and \
         (nout_therm_right_higher - nout_therm_left_higher).all() == zero_reference_array.all():
-    print('Thermal Radiation is symmetrical')
+    print('Thermal Radiation is symmetric')
 else:
-    print('Thermal Radiation is NOT symmetrical')
+    print('Thermal Radiation is NOT symmetric')
     print('Maximum Difference, lower band: ' + str((nout_therm_right_lower - nout_therm_left_lower).max()))
     print('Maximum Difference, higher band: ' + str((nout_therm_right_higher - nout_therm_left_higher).max()))
 
@@ -289,7 +309,7 @@ else:
 # ----------------------------------------------------------------------------------------------------------------------
 freq_grid = frequency_grid[:, N_sidebands] / omega_d
 
-
+# DCE Plots
 fig = plt.figure(figsize=(10, 4.5))
 fig1_name = 'DCE Radiation: ' + str(N_SQUIDs) + ' SQUIDs, '+ str(N_sidebands) + ' sidebands, ' + str(N_bins) + ' bins.'
 plt.suptitle(fig1_name, fontsize=16)
@@ -308,13 +328,13 @@ plt.title('DCE Radiation, Higher Band')
 #plt.savefig(fig1_name)
 plt.show()
 
-# These are here just for graph aesthetics
+# Thermal Plots
+fig = plt.figure(figsize=(10, 4.5))
+# These are here just for graph aesthetic
 high_exp = -(int(str(nout_therm_right_higher.max())[-2:]))
 low_exp = -(int(str(nout_therm_right_lower.max())[-2:]))
 low_weight = 10**(int(-low_exp))
 high_weight = 10**(int(-high_exp))
-
-fig = plt.figure(figsize=(10, 4.5))
 
 plt.subplot(1, 2, 1)
 therm_right_lower, = plt.plot(freq_grid, low_weight*nout_therm_right_lower, 'r--')
@@ -329,30 +349,16 @@ plt.ylabel("$ n_{pout}(\omega)$ * (e" + str(high_exp) + ')')
 plt.ylim(high_weight*(nout_therm_right_higher.min() - 0.1*nout_therm_right_higher.max()), high_weight*1.1*nout_therm_right_higher.max())
 plt.title('Right Thermal Radiation, Higher Band')
 
-
 plt.tight_layout()
-#plt.show()
+plt.show()
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # NOTES:
 #
-#   CHECK HOW TO CALCULATE ENERGY BANDS SO I CAN FIGURE OUT WHY THE LIMIT (0.48,0.52), CHECK IF IT DEPENDS ON N_SQUIDS
-#       THIS LIMITS ARE WHERE THE EIGENVALUES OF T_hat, C_hat
-#
-#
-#   CHECK HOW TO CALCULATE THAT LATTICE CONSTANT, WHY 0.96 * WAVELENGTH OF SQUID DRIVE?
-#   WHY IS THERMAL RADIATION NOT COMPLETELY SYMMETRICAL?
-#
 #   AFTER RUNNING EMPIRICALLY:
 #       * OUTPUT KEEPS FLUCTUATING WITH 1,2,3 SIDEBANDS. STABILIZES AFTER 4.
 #       * RADIATION OUTPUT PATTERN SHOWS AND IS REFINED UNTIL ABOUT 10,000 BINS.
-#
-# IDEAS:
-#
-#      * HOW WOULD SPECTRUM LOOK IF SQUIDS DIDN'T HAVE THE SAME FREQUENCY BUT RATHER SOME DISTRIBUTION?
-#           THIS CAN BE DONE EASILY BY CHANGING THE DRIVE FREQUENCY INTO A FUNCTION OF THE SQUID POSITIONS:
-#               DRIVE_FREQ(SQUID_ENUMERATION), HOW DO I ACCOUNT FOR THE CHANGE IN THE LATTICE CONSTANT?
 #
 #      * ARE WE LOOKING TO PRODUCE A SPECIFIC SHAPE OF RADIATION? JUST MAXIMIZE OUTPUT?
 #           TO HAVE A SHARP FREQUENCY DISTRIBUTION OR A BROAD ONE?
