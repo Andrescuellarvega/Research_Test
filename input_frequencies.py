@@ -30,7 +30,7 @@ def input_frequencies(endpoint, freq_range_low, freq_range_high, N_bins, N_sideb
         for m in range(1, 2*N_sidebands + 2):
             frequency_grid[k, m-1] = (k_space[k]+1) * (omega_d/N_bins) + (N_sidebands + 1 - m) * omega_d
 
-    if not endpoints:
+    if not endpoint:
         frequency_grid = frequency_grid[1:-1, :]
         freq_grid_shape = np.shape(frequency_grid)
 
