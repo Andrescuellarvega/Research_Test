@@ -12,9 +12,9 @@
 # N_bins = Number of bins to break up the frequency range into.
 
 
-def bloch_test(input_freq, N_bins, N_sidebands):
+def bloch_test(q_input_freq, N_bins, N_sidebands):
 
-    kk = input_freq
+    kk = q_input_freq
     condition = np.abs((np.cos(kk)) + ((epsilon / (2 * kk)) * np.sin(kk)))
     allowed_bands = np.empty(np.shape(condition))
 
@@ -100,26 +100,29 @@ def bloch_modes(individual_input_freq, epsilon):
 import numpy as np
 import j_constants
 from input_frequencies import input_frequencies
+import matplotlib.pyplot as plt
 
 # Changing constants to new units
 ell = j_constants.L0_eff
-QQ = 100 * j_constants.omega_d * (ell / j_constants.vcpw)  # Unit-less drive freq print(sideband frequency , see Units notes
+QQ = 100 * j_constants.omega_d * (ell / j_constants.vcpw)  # Unit-less drive freq print(sideband frequency ,
+# see Units notes
 epsilon = ell / j_constants.L0_eff
 j = np.complex(0, 1)
 
 # Creating grid of input frequencies
-N_sidebands = 1  # Number of sidebands used for calculation
-N_bins = 100  # Number of bins dividing (0, 2*N_Omega + 1)
+N_sidebands = 0  # Number of sidebands used for calculation
+N_bins = 1000  # Number of bins dividing (0, 2*N_Omega + 1)
 freq_range_low, freq_range_high = (0, 1)  # Bounds for the input frequencies array, divided by drive frequency.
 
-# To make q_input with unitless freq, pass QQ as drive freq to the input_frequencies function
+# To make q_input with unitless freq, pass QQ as drive freq to the input_frequencies function.
 
 q_input, input_shape = input_frequencies(False, freq_range_low, freq_range_high, N_bins, N_sidebands, QQ)
-kk = np.abs(q_input)
+# q = unitless omega
+kk = np.abs(q_input) / j_constants.c  # Dispersion relation, here simplified expression.
 
-allowed_bands = bloch_test(q_input, N_bins,N_sidebands)
+allowed_bands = bloch_test(q_input, N_bins, N_sidebands)
 
-A_k = np.zeros((N_bins-1, 2 *N_sidebands + 1), dtype='complex')
+A_k = np.zeros((N_bins-1, 2*N_sidebands + 1), dtype='complex')
 
 for bin in range(0, N_bins-1):
     for band in range(0, 2*N_sidebands + 1):
@@ -131,4 +134,20 @@ for bin in range(0, N_bins-1):
 
 
 
+main_band = np.zeros((N_bins-1), dtype='complex')
 
+for bin in range(0, N_bins-1):
+    main_band[bin] = allowed_bands[bin, N_sidebands]*kk[bin, N_sidebands]
+    if main_band[bin] == 0:
+       main_band[bin] = np.nan
+
+fig = plt.figure(figsize=(10, 4.5))
+
+plt.subplot()
+plt.plot(kk[:,N_sidebands]/QQ, main_band)
+plt.plot()
+plt.ylabel("$\omega$")
+
+
+#plt.savefig(fig1_name)
+plt.show()
