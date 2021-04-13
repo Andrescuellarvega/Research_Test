@@ -4,6 +4,7 @@ hp = 6.62607004*(10**(-34))  # Planck constant, (Js)
 hbar = hp/(2*np.pi)  # Reduced Planck constant hp/2*pi (Js)
 kb = 1.38064852*(10**(-23))  # Boltzmann constant (J/K)
 ec = 1.60217662*(10**(-19))  # Elementary charge, (Coulombs)
+c = 299792458                #Speed of light, (m/s)
 phi0 = hp/(2 * ec)  # Magnetic flux quantum (Js/C=J/A)
 
 # System Constants
